@@ -1,0 +1,8 @@
+{
+  "radon.enabled": true,
+  "radon.autoStart": true,
+  "radon.previewMode": "web",
+  "radon.expo.enabled": true,
+  "radon.expo.port": 8081,
+  "radon.expo.webPort": 8081
+}

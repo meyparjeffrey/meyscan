@@ -1,0 +1,39 @@
+# Cursor Rules - MeyparScan APK
+
+## Reglas Generales
+1. **Documentación**: Todo el código debe estar bien documentado con comentarios JSDoc/TSDoc
+2. **Estructura**: Seguir la arquitectura por capas (domain, application, infrastructure, presentation)
+3. **Idioma**: Todo el código y comentarios en español
+4. **Nombres**: Componentes PascalCase, funciones camelCase, constantes UPPER_SNAKE_CASE
+
+## Optimización y Refactorización
+1. **Performance**: Usar React.memo, evitar renders innecesarios, optimizar listas con FlatList
+2. **Código limpio**: Funciones pequeñas, evitar duplicación, usar hooks personalizados
+3. **TypeScript**: Tipos estrictos, evitar `any`, definir interfaces
+
+## Actualización de Manuales
+1. **MANUAL_PROGRAMADOR.md**: Añadir documentación cuando se crea nuevo componente/servicio/hook
+2. **MANUAL_USUARIO.md**: Añadir funcionalidades nuevas cuando se implementan
+
+## Responsive Design
+1. **Newland (5-5.5" horizontal)**: Optimizar para pantalla horizontal, verificar botones accesibles (minHeight: 48-56px)
+2. **Móvil**: Soporte horizontal y vertical, componentes flexibles
+3. **Botones**: Todos los botones deben tener minHeight para accesibilidad
+
+## Cámara
+1. **SIEMPRE cámara trasera** en dispositivos móviles
+2. Usar `facing="back"` en CameraView
+
+## Logo y Tema
+1. Logo visible en todas las pantallas (Header)
+2. Logo blanco en modo oscuro
+3. Colores del logo: #E62144 (primary), #7F7F7F (grayDark), #020202 (grayLight)
+
+## No usar Git
+- No hacer commits automáticos
+- No usar comandos de git
+
+## Testing
+1. Verificar responsive en Newland y móvil
+2. Todos los botones deben ser visibles y accesibles
+3. Probar en browser antes de build

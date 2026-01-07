@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "MeyScan",
+    "slug": "meyscan",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E62144"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.meypar.scanner"
+    },
+    "android": {
+      "package": "com.meypar.meyscan",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E62144"
+      },
+      "permissions": [
+        "CAMERA"
+      ],
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "supabaseUrl": "https://dmjulfufqftfrwhjhwlz.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtanVsZnVmcWZ0ZnJ3aGpod2x6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTk3NTIsImV4cCI6MjA3OTI5NTc1Mn0.XrSUpg718Gbwi_RkQknJxCENd9OyHfmWpN_QlscfQz0"
+    }
+  }
+}
