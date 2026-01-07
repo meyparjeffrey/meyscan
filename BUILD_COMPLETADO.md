@@ -5,7 +5,8 @@
 **APK generada correctamente**
 
 - **Nombre**: `MeyScan.apk`
-- **Ubicación**: `C:\meyscan_build\scanner-apk\MeyScan.apk`
+- **Ubicación Principal**: `C:\meyscan_build\MeyScan.apk` (fácil acceso)
+- **Ubicación Original**: `C:\meyscan_build\scanner-apk\MeyScan.apk`
 - **Tamaño**: 89.83 MB
 - **Fecha**: 01/07/2026 12:53:09
 
