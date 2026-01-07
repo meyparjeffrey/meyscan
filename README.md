@@ -39,6 +39,24 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 - `src/infrastructure/` - Supabase, repositorios, storage
 - `src/presentation/` - Pantallas, componentes, hooks, tema, i18n
 
+## 📍 Ubicación del Proyecto
+
+**Proyecto principal**: `C:\meyscan_build\scanner-apk`
+
+> ⚠️ **Nota importante**: El proyecto está en esta ubicación (sin la letra "ñ") para evitar problemas de encoding durante la compilación de Android APK.
+
+## 🔄 GitHub
+
+- **Repositorio**: https://github.com/meyparjeffrey/meyscan
+- **Rama**: `master`
+- **Estado**: ✅ Sincronizado
+
+## 📦 APK Generada
+
+- **Ubicación**: `C:\meyscan_build\MeyScan.apk`
+- **Tamaño**: 89.83 MB
+- **Estado**: ✅ Lista para instalar
+
 ## Documentación
 
 - `MANUAL_USUARIO.md` - Manual de usuario
@@ -46,3 +64,4 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 - `ESTADO_PROYECTO.md` - Estado actual del proyecto
 - `OPTIMIZACIONES.md` - Optimizaciones aplicadas
 - `IMPLEMENTACION_COMPLETA.md` - Lista detallada de archivos
+- `BUILD_COMPLETADO.md` - Detalles del build exitoso
