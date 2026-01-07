@@ -19,19 +19,43 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
-  const { isAuthenticated, loading } = useAuth();
+  console.log('[AppNavigator] ========================================');
+  console.log('[AppNavigator] RENDERIZANDO NAVEGADOR');
+  console.log('[AppNavigator] ========================================');
+  console.log('[AppNavigator] Timestamp:', new Date().toISOString());
+  
+  console.log('[AppNavigator] Llamando a useAuth()...');
+  const { isAuthenticated, loading, error } = useAuth();
+  console.log('[AppNavigator] useAuth() completado');
+
+  console.log('[AppNavigator] Estado de autenticación:', { 
+    loading, 
+    isAuthenticated, 
+    error: error || 'Sin error',
+    timestamp: new Date().toISOString()
+  });
 
   if (loading) {
-    return <LoadingSpinner fullScreen />;
+    console.log('[AppNavigator] ⏳ Loading=true, mostrando LoadingSpinner...');
+    console.log('[AppNavigator] LoadingSpinner se renderizara ahora');
+    const spinner = <LoadingSpinner fullScreen />;
+    console.log('[AppNavigator] LoadingSpinner creado, retornando...');
+    return spinner;
   }
 
-  return (
+  const initialRoute = isAuthenticated ? "Home" : "Login";
+  console.log('[AppNavigator] ✅ Loading=false, renderizando navegación');
+  console.log('[AppNavigator] Ruta inicial:', initialRoute);
+  console.log('[AppNavigator] Usuario autenticado:', isAuthenticated ? 'SÍ' : 'NO');
+  console.log('[AppNavigator] Creando NavigationContainer...');
+
+  const navContainer = (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
         }}
-        initialRouteName={isAuthenticated ? "Home" : "Login"}
+        initialRouteName={initialRoute}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
@@ -39,5 +63,10 @@ export function AppNavigator() {
       </Stack.Navigator>
     </NavigationContainer>
   );
+  
+  console.log('[AppNavigator] NavigationContainer creado, retornando...');
+  console.log('[AppNavigator] La pantalla', initialRoute, 'deberia renderizarse ahora');
+  
+  return navContainer;
 }
 

@@ -72,6 +72,7 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
 
   // Refs
   const hidInputRef = useRef<TextInput>(null);
@@ -241,10 +242,28 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
         activeUser.displayName
       );
 
+      // Actualizar el producto con el stock actualizado desde la BD
+      console.log('[ScannerScreen] Actualizando stock del producto desde BD...');
+      const updatedProduct = await productRepository.findById(selectedProduct.id);
+      if (updatedProduct) {
+        console.log(`[ScannerScreen] ✅ Stock actualizado: ${updatedProduct.stockCurrent} (antes: ${selectedProduct.stockCurrent})`);
+        setSelectedProduct(updatedProduct);
+      } else {
+        console.warn('[ScannerScreen] ⚠️ No se pudo obtener el producto actualizado');
+      }
+
+      // Guardar el mensaje de éxito ANTES de mostrar el modal
+      const successMsg = `${movementType === 'IN' ? t('scanner.entry') : t('scanner.exit')}: ${quantity} x ${selectedProduct.name}`;
+      setSuccessMessage(successMsg);
+      
       setSaveSuccess(true);
+      console.log('[ScannerScreen] ✅ Movimiento guardado exitosamente, saveSuccess=true');
+      console.log('[ScannerScreen] Modal de éxito debería mostrarse ahora');
+      console.log('[ScannerScreen] Mensaje de éxito:', successMsg);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t('scanner.errorSave');
       setSaveError(errorMessage);
+      console.error('[ScannerScreen] ❌ Error al guardar movimiento:', errorMessage);
     } finally {
       setSaving(false);
     }
@@ -610,6 +629,36 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
             returnKeyType="done"
           />
         )}
+
+        {/* Modal de Éxito - Profesional y Moderno */}
+        <SuccessModal
+          visible={saveSuccess}
+          title={t('scanner.movementRegistered')}
+          message={successMessage}
+          onAccept={() => {
+            // Solución B: Volver automáticamente a la pantalla de búsqueda
+            clearScanner();
+            setSelectedProduct(null);
+            setSearchQuery('');
+            setSearchResults([]);
+            setMovementType(null);
+            setQuantity('1');
+            setSaveSuccess(false);
+            setSaveError(null);
+            setSuccessMessage(undefined);
+            // Enfocar el input de búsqueda para continuar escaneando
+            if (searchInputRef.current) {
+              setTimeout(() => {
+                searchInputRef.current?.focus();
+              }, 100);
+            }
+            if (hidInputRef.current) {
+              setTimeout(() => {
+                hidInputRef.current?.focus();
+              }, 100);
+            }
+          }}
+        />
       </KeyboardAvoidingView>
     );
   }
@@ -690,11 +739,10 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
                 maxHeight: isSmallHeight ? 250 : isMobileHorizontal ? 300 : 400,
               }
             ]}>
-              <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
+              <ScrollView nestedScrollEnabled={true}>
+                {searchResults.map((item) => (
                   <TouchableOpacity
+                    key={item.id}
                     style={[
                       styles.searchResultItem,
                       { 
@@ -723,10 +771,8 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
                       {item.name}
                     </Text>
                   </TouchableOpacity>
-                )}
-                nestedScrollEnabled={true}
-                scrollEnabled={true}
-              />
+                ))}
+              </ScrollView>
             </View>
           )}
 
@@ -817,11 +863,9 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
       <SuccessModal
         visible={saveSuccess}
         title={t('scanner.movementRegistered')}
-        message={selectedProduct && movementType
-          ? `${movementType === 'IN' ? t('scanner.entry') : t('scanner.exit')}: ${quantity} x ${selectedProduct.name}`
-          : undefined
-        }
+        message={successMessage}
         onAccept={() => {
+          // Solución B: Volver automáticamente a la pantalla de búsqueda
           clearScanner();
           setSelectedProduct(null);
           setSearchQuery('');
@@ -830,8 +874,17 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
           setQuantity('1');
           setSaveSuccess(false);
           setSaveError(null);
+          setSuccessMessage(undefined);
+          // Enfocar el input de búsqueda para continuar escaneando
+          if (searchInputRef.current) {
+            setTimeout(() => {
+              searchInputRef.current?.focus();
+            }, 100);
+          }
           if (hidInputRef.current) {
-            hidInputRef.current.focus();
+            setTimeout(() => {
+              hidInputRef.current?.focus();
+            }, 100);
           }
         }}
       />

@@ -10,6 +10,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Obtener credenciales SOLO desde variables de entorno o Constants de Expo
 // NO se permiten valores hardcodeados
@@ -49,11 +50,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    storage: undefined, // En web, usar localStorage automáticamente
+    storage: AsyncStorage, // Usar AsyncStorage para persistir la sesión en la APK
   },
 });
 
 // Log para verificar que las credenciales se cargaron correctamente
 console.log('[Supabase Client] Configurado con URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NO CONFIGURADO');
 console.log('[Supabase Client] Anon Key configurado:', supabaseAnonKey ? 'SÍ' : 'NO');
+console.log('[Supabase Client] Almacenamiento persistente configurado');
 

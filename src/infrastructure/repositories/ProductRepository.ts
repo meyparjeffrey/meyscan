@@ -12,6 +12,7 @@ export class ProductRepository {
    */
   async findByCode(code: string): Promise<Product | null> {
     try {
+      console.log(`[ProductRepository] Buscando producto por código: ${code}`);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -21,15 +22,17 @@ export class ProductRepository {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No encontrado
+          console.log(`[ProductRepository] Producto no encontrado: ${code}`);
           return null;
         }
+        console.error(`[ProductRepository] ❌ Error al buscar por código:`, error);
         throw error;
       }
 
+      console.log(`[ProductRepository] ✅ Producto encontrado: ${data.name}`);
       return this.mapToProduct(data);
     } catch (error) {
-      console.error('Error finding product by code:', error);
+      console.error('[ProductRepository] ❌ Excepción en findByCode:', error);
       return null;
     }
   }
@@ -41,6 +44,7 @@ export class ProductRepository {
    */
   async findByBarcode(barcode: string): Promise<Product | null> {
     try {
+      console.log(`[ProductRepository] Buscando producto por código de barras: ${barcode}`);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -50,15 +54,17 @@ export class ProductRepository {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No encontrado
+          console.log(`[ProductRepository] Código de barras no encontrado: ${barcode}`);
           return null;
         }
+        console.error(`[ProductRepository] ❌ Error al buscar por código de barras:`, error);
         throw error;
       }
 
+      console.log(`[ProductRepository] ✅ Producto encontrado: ${data.name}`);
       return this.mapToProduct(data);
     } catch (error) {
-      console.error('Error finding product by barcode:', error);
+      console.error('[ProductRepository] ❌ Excepción en findByBarcode:', error);
       return null;
     }
   }
@@ -120,7 +126,8 @@ export class ProductRepository {
         return [];
       }
 
-      const term = searchTerm.trim().toLowerCase();
+      const term = searchTerm.trim();
+      console.log(`[ProductRepository] Buscando productos con término: "${term}"`);
 
       // Sin límite para permitir ver todos los productos con scroll
       const { data, error } = await supabase
@@ -131,13 +138,14 @@ export class ProductRepository {
         .order('name', { ascending: true });
 
       if (error) {
-        console.error('Error searching products:', error);
+        console.error('[ProductRepository] ❌ Error en searchProducts:', error);
         return [];
       }
 
+      console.log(`[ProductRepository] ✅ Búsqueda finalizada. Encontrados: ${data?.length || 0}`);
       return (data || []).map(item => this.mapToProduct(item));
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error('[ProductRepository] ❌ Excepción en searchProducts:', error);
       return [];
     }
   }

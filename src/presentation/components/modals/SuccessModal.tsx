@@ -27,6 +27,17 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
   const isSmallHeight = screenHeight < 500;
   const isMobileHorizontal = screenWidth > screenHeight && screenHeight < 500;
 
+  // Log para depuración
+  React.useEffect(() => {
+    if (visible) {
+      console.log('[SuccessModal] ✅ Modal visible=true, renderizando...');
+      console.log('[SuccessModal] Título:', title);
+      console.log('[SuccessModal] Mensaje:', message);
+    } else {
+      console.log('[SuccessModal] Modal visible=false');
+    }
+  }, [visible, title, message]);
+
   return (
     <Modal
       visible={visible}

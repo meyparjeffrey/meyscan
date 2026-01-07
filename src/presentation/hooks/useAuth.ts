@@ -19,14 +19,56 @@ export function useAuth() {
 
   const loadSession = async () => {
     try {
+      console.log('[useAuth] ========================================');
+      console.log('[useAuth] INICIANDO CARGA DE SESION');
+      console.log('[useAuth] ========================================');
+      console.log('[useAuth] Timestamp inicio:', new Date().toISOString());
+      
+      console.log('[useAuth] Estableciendo loading=true...');
       setLoading(true);
+      console.log('[useAuth] loading=true establecido');
+      
+      console.log('[useAuth] Llamando a authService.getCurrentSession()...');
+      const startTime = Date.now();
       const currentSession = await authService.getCurrentSession();
+      const duration = Date.now() - startTime;
+      console.log('[useAuth] getCurrentSession() completado en', duration, 'ms');
+      
+      console.log('[useAuth] ✅ Sesión obtenida:', currentSession ? 'SÍ (autenticado)' : 'NO (sin autenticar)');
+      if (currentSession) {
+        console.log('[useAuth] Detalles de sesión:', {
+          user: currentSession.user?.email,
+          expiresAt: currentSession.expires_at,
+        });
+      }
+      
+      console.log('[useAuth] Actualizando estado: setSession()...');
       setSession(currentSession);
+      console.log('[useAuth] setSession() completado');
+      
+      console.log('[useAuth] Actualizando estado: setError(null)...');
       setError(null);
+      console.log('[useAuth] setError(null) completado');
+      
+      console.log('[useAuth] Estado actualizado correctamente');
     } catch (err) {
+      console.error('[useAuth] ❌ ERROR al cargar sesión:', err);
+      console.error('[useAuth] Error tipo:', err instanceof Error ? err.constructor.name : typeof err);
+      console.error('[useAuth] Error mensaje:', err instanceof Error ? err.message : String(err));
+      console.error('[useAuth] Error stack:', err instanceof Error ? err.stack : 'No stack');
+      console.error('[useAuth] Estableciendo error en estado...');
       setError(err instanceof Error ? err.message : 'Error al cargar sesión');
+      console.error('[useAuth] Error establecido en estado');
     } finally {
+      console.log('[useAuth] ========================================');
+      console.log('[useAuth] ENTRANDO A FINALLY');
+      console.log('[useAuth] Finalizando carga de sesión, estableciendo loading=false');
+      console.log('[useAuth] Timestamp antes de setLoading(false):', new Date().toISOString());
       setLoading(false);
+      console.log('[useAuth] setLoading(false) COMPLETADO');
+      console.log('[useAuth] Timestamp despues de setLoading(false):', new Date().toISOString());
+      console.log('[useAuth] ========================================');
+      console.log('[useAuth] loadSession() FINALIZADO COMPLETAMENTE');
     }
   };
 

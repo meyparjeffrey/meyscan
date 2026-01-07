@@ -62,14 +62,16 @@ export const UserPickerModal: React.FC<UserPickerModalProps> = ({
 
   const loadUsers = async () => {
     try {
+      console.log('[UserPickerModal] Iniciando carga de usuarios...');
       setLoading(true);
       setError(null);
       const allUsers = await repository.findAllEnabled();
+      console.log('[UserPickerModal] Usuarios recibidos del repo:', allUsers.length);
       setUsers(allUsers);
       setFilteredUsers(allUsers);
     } catch (err) {
+      console.error('[UserPickerModal] ❌ Error en loadUsers:', err);
       setError(t('userPicker.errorLoading'));
-      console.error('Error loading users:', err);
     } finally {
       setLoading(false);
     }
@@ -183,11 +185,16 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   modalContent: {
-    width: '90%',
+    width: '95%',
     maxWidth: 500,
-    maxHeight: '80%',
+    height: '85%', // Altura fija para evitar que colapse a 0
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
+    elevation: 5, // Sombra para Android
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   title: {
     fontSize: 24,
@@ -205,11 +212,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   list: {
-    flex: 1,
-    maxHeight: 400,
+    width: '100%',
+    flexGrow: 1, // Asegurar que crezca para ocupar espacio
+    minHeight: 200, // Altura mínima garantizada
   },
   listContent: {
-    paddingBottom: 8,
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   userItem: {
     padding: 20,

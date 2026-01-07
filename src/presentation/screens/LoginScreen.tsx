@@ -18,9 +18,29 @@ import type { RootStackParamList } from '../navigation/AppNavigator';
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] 🎯 PANTALLA DE LOGIN MONTANDOSE');
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] ========================================');
+  console.log('[LoginScreen] Timestamp:', new Date().toISOString());
+  
+  console.log('[LoginScreen] Obteniendo contexto...');
   const { theme } = useAppContext();
+  console.log('[LoginScreen] ✅ Contexto obtenido, tema:', theme.type);
+  
+  console.log('[LoginScreen] Obteniendo traducciones...');
   const { t } = useTranslation();
+  console.log('[LoginScreen] ✅ Traducciones cargadas');
+  
+  console.log('[LoginScreen] Obteniendo auth hook...');
   const { login, loading, error } = useAuth();
+  console.log('[LoginScreen] ✅ Auth hook obtenido, loading:', loading, 'error:', error || 'Sin error');
+  
+  console.log('[LoginScreen] ✅✅✅ PANTALLA DE LOGIN LISTA PARA RENDERIZAR ✅✅✅');
+  console.log('[LoginScreen] Iniciando renderizado del JSX...');
   
   // Obtener dimensiones para responsive
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();

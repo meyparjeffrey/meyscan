@@ -1,7 +1,7 @@
 /**
  * Traduccions en Català
  */
-export default {
+const translations = {
   common: {
     confirm: 'Confirmar',
     cancel: 'Cancelar',
@@ -97,4 +97,6 @@ export default {
     connectivity: 'Conectivitat',
   },
 } as const;
+
+export default translations;
 

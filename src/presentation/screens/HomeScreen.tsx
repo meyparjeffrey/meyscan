@@ -19,9 +19,20 @@ import { ADMIN_TAPS_REQUIRED, ADMIN_TAPS_TIMEOUT_MS } from '../../utils/constant
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  console.log('[HomeScreen] ========================================');
+  console.log('[HomeScreen] MONTANDO PANTALLA HOME');
+  console.log('[HomeScreen] ========================================');
+  
   const { theme, themeType, language, activeUser, setTheme, setLanguage, setActiveUser } = useAppContext();
+  console.log('[HomeScreen] Contexto obtenido:', { themeType, language, activeUser: activeUser ? activeUser.displayName : 'No' });
+  
   const { t } = useTranslation();
+  console.log('[HomeScreen] Traducciones cargadas');
+  
   const { logout } = useAuth();
+  console.log('[HomeScreen] Auth hook obtenido');
+  
+  console.log('[HomeScreen] ✅ Pantalla home lista para renderizar');
   
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);

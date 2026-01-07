@@ -11,6 +11,19 @@ export class ScannerUsersRepository {
    */
   async findAllEnabled(): Promise<ScannerUser[]> {
     try {
+      console.log('[ScannerUsersRepository] Buscando usuarios habilitados...');
+      
+      // Verificar estado de sesión antes de la consulta
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const token = session.access_token;
+        console.log('[ScannerUsersRepository] Autenticado. Token (primeros 20 chars):', token.substring(0, 20));
+        console.log('[ScannerUsersRepository] User ID:', session.user?.id);
+        console.log('[ScannerUsersRepository] Role:', session.user?.role);
+      } else {
+        console.log('[ScannerUsersRepository] ⚠️ NO AUTENTICADO en Supabase');
+      }
+
       const { data, error } = await supabase
         .from('scanner_users')
         .select('*')
@@ -18,12 +31,15 @@ export class ScannerUsersRepository {
         .order('display_name', { ascending: true });
 
       if (error) {
+        console.error('[ScannerUsersRepository] ❌ Error en consulta Supabase:', error);
+        console.error('[ScannerUsersRepository] Detalles error:', JSON.stringify(error));
         throw error;
       }
 
+      console.log(`[ScannerUsersRepository] ✅ Usuarios encontrados: ${data?.length || 0}`);
       return (data || []).map(this.mapToScannerUser);
     } catch (error) {
-      console.error('Error finding scanner users:', error);
+      console.error('[ScannerUsersRepository] ❌ Excepción al buscar usuarios:', error);
       throw error;
     }
   }

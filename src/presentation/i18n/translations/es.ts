@@ -1,7 +1,7 @@
 /**
  * Traducciones en Español
  */
-export default {
+const translations = {
   common: {
     confirm: 'Confirmar',
     cancel: 'Cancelar',
@@ -97,4 +97,6 @@ export default {
     connectivity: 'Conectividad',
   },
 } as const;
+
+export default translations;
 

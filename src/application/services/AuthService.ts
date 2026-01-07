@@ -46,6 +46,8 @@ export class AuthService {
       }
 
       console.log('[AuthService] Login exitoso, sesión obtenida');
+      console.log('[AuthService] JWT:', data.session.access_token.substring(0, 15) + '...');
+      console.log('[AuthService] User Role:', data.session.user.role);
       return data.session;
     } catch (error) {
       console.error('[AuthService] Error en login:', error);
@@ -80,10 +82,36 @@ export class AuthService {
    */
   async getCurrentSession(): Promise<Session | null> {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[AuthService] ========================================');
+      console.log('[AuthService] getCurrentSession() INICIADO');
+      console.log('[AuthService] Llamando a supabase.auth.getSession()...');
+      const startTime = Date.now();
+      
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      const duration = Date.now() - startTime;
+      console.log('[AuthService] getSession() completado en', duration, 'ms');
+      
+      if (error) {
+        console.error('[AuthService] ❌ Error en getSession:', error);
+        return null;
+      }
+      
+      console.log('[AuthService] ✅ Sesión obtenida:', session ? 'SÍ' : 'NO');
+      if (session) {
+        console.log('[AuthService] Detalles:', {
+          userId: session.user?.id,
+          email: session.user?.email,
+          expiresAt: session.expires_at,
+        });
+      }
+      console.log('[AuthService] ========================================');
       return session;
     } catch (error) {
-      console.error('Error getting current session:', error);
+      console.error('[AuthService] ❌ EXCEPCIÓN en getCurrentSession:', error);
+      console.error('[AuthService] Error tipo:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('[AuthService] Error mensaje:', error instanceof Error ? error.message : String(error));
+      console.error('[AuthService] Error stack:', error instanceof Error ? error.stack : 'No stack');
       return null;
     }
   }
