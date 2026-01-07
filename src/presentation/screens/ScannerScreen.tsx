@@ -19,9 +19,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
-  FlatList,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppContext } from '../context/AppContext';
 import { useScanner } from '../hooks/useScanner';
 import { useDeviceDetection } from '../hooks/useDeviceDetection';
@@ -37,7 +37,7 @@ import { MovementType } from '../../domain/types/MovementType';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/AppNavigator';
-import { INACTIVITY_TIMEOUT_MS, DEFAULTS } from '../../utils/constants';
+import { INACTIVITY_TIMEOUT_MS } from '../../utils/constants';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Scanner'>;
 
@@ -259,11 +259,9 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
       setSaveSuccess(true);
       console.log('[ScannerScreen] ✅ Movimiento guardado exitosamente, saveSuccess=true');
       console.log('[ScannerScreen] Modal de éxito debería mostrarse ahora');
-      console.log('[ScannerScreen] Mensaje de éxito:', successMsg);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t('scanner.errorSave');
       setSaveError(errorMessage);
-      console.error('[ScannerScreen] ❌ Error al guardar movimiento:', errorMessage);
     } finally {
       setSaving(false);
     }
@@ -363,260 +361,426 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
     },
   };
 
-  // Si hay un producto seleccionado, mostrar vista de acción
-  if (selectedProduct) {
-    return (
-      <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <Header />
-        
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            dynamicStyles.container,
-            { 
-              alignItems: 'center',
-              justifyContent: isSmallHeight ? 'flex-start' : 'center',
-              minHeight: isSmallHeight ? screenHeight - 100 : undefined,
+  // Contenido del ScrollView (buscador y botón escanear) - reutilizable para iOS y Android
+  const scrollViewContent = (
+    <>
+      {/* Buscador avanzado */}
+      <View style={[styles.searchSection, { marginBottom: isSmallHeight ? 12 : 20 }]}>
+        <Text style={[dynamicStyles.label, { color: theme.colors.text, marginBottom: isSmallHeight ? 6 : 8 }]}>
+          {t('scanner.search')}:
+        </Text>
+        <TextInput
+          ref={searchInputRef}
+          style={[
+            styles.searchInput,
+            dynamicStyles.searchInput,
+            {
+              backgroundColor: theme.colors.surface,
+              color: theme.colors.text,
+              borderColor: theme.colors.border,
+              marginBottom: isSmallHeight ? 6 : 8,
             },
           ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={!isSmallHeight}
+          placeholder={t('scanner.searchPlaceholder')}
+          placeholderTextColor={theme.colors.textSecondary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        {/* Resultados de búsqueda con scroll infinito */}
+        {showSearchResults && searchResults.length > 0 && (
+          <View style={[
+            styles.searchResults, 
+            { 
+              backgroundColor: theme.colors.surface,
+              maxHeight: isSmallHeight ? 250 : isMobileHorizontal ? 300 : 400,
+            }
+          ]}>
+            <ScrollView nestedScrollEnabled={true}>
+              {searchResults.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.searchResultItem,
+                    { 
+                      borderBottomColor: theme.colors.border,
+                      padding: isSmallHeight ? 12 : 16,
+                    },
+                  ]}
+                  onPress={() => handleProductSelect(item)}
+                >
+                  <Text style={[
+                    styles.searchResultCode, 
+                    { 
+                      color: theme.colors.textSecondary,
+                      fontSize: isSmallHeight ? 13 : 14,
+                    }
+                  ]}>
+                    {item.code}
+                  </Text>
+                  <Text style={[
+                    styles.searchResultName, 
+                    { 
+                      color: theme.colors.text,
+                      fontSize: isSmallHeight ? 15 : 16,
+                    }
+                  ]} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {searching && (
+          <Text style={[styles.searchingText, { color: theme.colors.textSecondary }]}>
+            {t('scanner.searching')}...
+          </Text>
+        )}
+
+        {showSearchResults && searchResults.length === 0 && !searching && searchQuery.length >= 2 && (
+          <Text style={[styles.noResultsText, { color: theme.colors.textSecondary }]}>
+            {t('scanner.noResults')}
+          </Text>
+        )}
+      </View>
+
+      {/* Botón Escanear */}
+      <Button
+        title={t('scanner.scanButton')}
+        onPress={handleScanButtonPress}
+        variant="primary"
+        style={[
+          styles.scanButton, 
+          { 
+            minHeight: isSmallHeight ? 56 : isMobileHorizontal ? 64 : 72,
+            marginTop: isSmallHeight ? 12 : 20,
+            marginBottom: isSmallHeight ? 12 : 20,
+          }
+        ]}
+        textStyle={{ 
+          fontSize: isSmallHeight ? 18 : isMobileHorizontal ? 20 : 24, 
+          fontWeight: '700' 
+        }}
+      />
+    </>
+  );
+
+  // Contenido de la vista de acción del producto
+  const productActionContent = selectedProduct && (
+    <>
+      {/* Botón volver */}
+      <TouchableOpacity
+        style={[
+          styles.backButton, 
+          { 
+            borderColor: theme.colors.border,
+            marginBottom: isSmallHeight ? 10 : 16,
+            padding: isSmallHeight ? 10 : 12,
+          }
+        ]}
+        onPress={handleBackToSearch}
+      >
+        <Text style={[
+          styles.backButtonText, 
+          { 
+            color: theme.colors.text,
+            fontSize: isSmallHeight ? 14 : 16,
+          }
+        ]}>
+          ← {t('scanner.back')}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Información del producto */}
+      <View style={[
+        styles.productCard, 
+        dynamicStyles.productCard,
+        { 
+          backgroundColor: theme.colors.surface, 
+          width: '100%', 
+          maxWidth: isSmallHeight ? '100%' : 600,
+          borderColor: theme.colors.border,
+        }
+      ]}>
+        <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
+          {t('scanner.code')}:
+        </Text>
+        <Text style={[dynamicStyles.productCode, { color: theme.colors.text }]}>
+          {selectedProduct.code}
+        </Text>
+
+        <View style={{ height: isSmallHeight ? 12 : 16 }} />
+
+        <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
+          {t('scanner.product')}:
+        </Text>
+        <Text style={[dynamicStyles.productName, { color: theme.colors.text }]} numberOfLines={3}>
+          {selectedProduct.name}
+        </Text>
+
+        {selectedProduct.stockCurrent !== undefined && (
+          <>
+            <View style={{ height: isSmallHeight ? 12 : 16 }} />
+            <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
+              Stock:
+            </Text>
+            <Text style={[dynamicStyles.stockText, { color: theme.colors.text }]}>
+              {selectedProduct.stockCurrent}
+            </Text>
+          </>
+        )}
+      </View>
+
+      {/* Botones de acción CENTRADOS y RESPONSIVE */}
+      {!movementType ? (
+        <View
+          style={[
+            styles.actionButtonsContainer,
+            isMobileHorizontal && styles.actionButtonsHorizontal,
+            { 
+              width: '100%', 
+              maxWidth: isSmallHeight ? '100%' : 600,
+              alignItems: 'center',
+              marginBottom: isSmallHeight ? 12 : 20,
+            },
+          ]}
         >
-          {/* Botón volver */}
           <TouchableOpacity
             style={[
-              styles.backButton, 
+              dynamicStyles.actionButton,
+              styles.actionButton,
               { 
-                borderColor: theme.colors.border,
-                marginBottom: isSmallHeight ? 10 : 16,
-                padding: isSmallHeight ? 10 : 12,
-              }
+                backgroundColor: '#4CAF50', 
+                width: isMobileHorizontal ? '48%' : '100%',
+                paddingVertical: isSmallHeight ? 16 : 20,
+              },
             ]}
-            onPress={handleBackToSearch}
+            onPress={() => handleMovementTypeSelect('IN')}
           >
-            <Text style={[
-              styles.backButtonText, 
-              { 
-                color: theme.colors.text,
-                fontSize: isSmallHeight ? 14 : 16,
-              }
-            ]}>
-              ← {t('scanner.back')}
+            <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
+              {t('scanner.entry')}
             </Text>
           </TouchableOpacity>
 
-          {/* Información del producto */}
-          <View style={[
-            styles.productCard, 
-            dynamicStyles.productCard,
+          <TouchableOpacity
+            style={[
+              dynamicStyles.actionButton,
+              styles.actionButton,
+              { 
+                backgroundColor: '#F44336', 
+                width: isMobileHorizontal ? '48%' : '100%',
+                paddingVertical: isSmallHeight ? 16 : 20,
+              },
+            ]}
+            onPress={() => handleMovementTypeSelect('OUT')}
+          >
+            <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
+              {t('scanner.exit')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={[
             { 
-              backgroundColor: theme.colors.surface, 
               width: '100%', 
               maxWidth: isSmallHeight ? '100%' : 600,
-              borderColor: theme.colors.border,
+              alignItems: 'center',
+            },
+          ]}
+        >
+          {/* Indicador de tipo de movimiento seleccionado */}
+          <View style={[
+            styles.movementTypeIndicator,
+            { 
+              backgroundColor: movementType === 'IN' ? '#E8F5E9' : '#FFEBEE',
+              marginBottom: isSmallHeight ? 12 : 16,
             }
           ]}>
-            <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
-              {t('scanner.code')}:
+            <Text style={[
+              styles.movementTypeText,
+              { 
+                color: movementType === 'IN' ? '#2E7D32' : '#C62828',
+                fontSize: isSmallHeight ? 18 : 20,
+              }
+            ]}>
+              {movementType === 'IN' ? t('scanner.entry') : t('scanner.exit')}
             </Text>
-            <Text style={[dynamicStyles.productCode, { color: theme.colors.text }]}>
-              {selectedProduct.code}
-            </Text>
-
-            <View style={{ height: isSmallHeight ? 12 : 16 }} />
-
-            <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
-              {t('scanner.product')}:
-            </Text>
-            <Text style={[dynamicStyles.productName, { color: theme.colors.text }]} numberOfLines={3}>
-              {selectedProduct.name}
-            </Text>
-
-            {selectedProduct.stockCurrent !== undefined && (
-              <>
-                <View style={{ height: isSmallHeight ? 12 : 16 }} />
-                <Text style={[dynamicStyles.label, { color: theme.colors.textSecondary }]}>
-                  Stock:
-                </Text>
-                <Text style={[dynamicStyles.stockText, { color: theme.colors.text }]}>
-                  {selectedProduct.stockCurrent}
-                </Text>
-              </>
-            )}
+            <TouchableOpacity
+              onPress={() => {
+                setMovementType(null);
+                setQuantity('1');
+                setSaveError(null);
+              }}
+              style={styles.cancelMovementButton}
+            >
+              <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>✕</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Botones de acción CENTRADOS y RESPONSIVE */}
-          {!movementType ? (
-            <View
+          {/* Campo de cantidad */}
+          <View style={[
+            styles.quantitySection,
+            { width: '100%', marginBottom: isSmallHeight ? 12 : 16 }
+          ]}>
+            <Text style={[dynamicStyles.label, { color: theme.colors.text }]}>
+              {t('scanner.quantity')}:
+            </Text>
+            <TextInput
               style={[
-                styles.actionButtonsContainer,
-                isMobileHorizontal && styles.actionButtonsHorizontal,
-                { 
-                  width: '100%', 
-                  maxWidth: isSmallHeight ? '100%' : 600,
-                  alignItems: 'center',
-                  marginBottom: isSmallHeight ? 12 : 20,
+                styles.quantityInput,
+                {
+                  backgroundColor: theme.colors.surface,
+                  color: theme.colors.text,
+                  borderColor: saveError && saveError.includes(t('scanner.errorQuantity')) 
+                    ? '#F44336' 
+                    : theme.colors.border,
+                  height: isSmallHeight ? 56 : 64,
+                  fontSize: isSmallHeight ? 18 : 20,
+                  minHeight: isSmallHeight ? 56 : 64,
                 },
               ]}
-            >
-              <TouchableOpacity
-                style={[
-                  dynamicStyles.actionButton,
-                  styles.actionButton,
-                  { 
-                    backgroundColor: '#4CAF50', 
-                    width: isMobileHorizontal ? '48%' : '100%',
-                    paddingVertical: isSmallHeight ? 16 : 20,
-                  },
-                ]}
-                onPress={() => handleMovementTypeSelect('IN')}
-              >
-                <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
-                  {t('scanner.entry')}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  dynamicStyles.actionButton,
-                  styles.actionButton,
-                  { 
-                    backgroundColor: '#F44336', 
-                    width: isMobileHorizontal ? '48%' : '100%',
-                    paddingVertical: isSmallHeight ? 16 : 20,
-                  },
-                ]}
-                onPress={() => handleMovementTypeSelect('OUT')}
-              >
-                <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
-                  {t('scanner.exit')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View
-              style={[
-                { 
-                  width: '100%', 
-                  maxWidth: isSmallHeight ? '100%' : 600,
-                  alignItems: 'center',
-                },
-              ]}
-            >
-              {/* Indicador de tipo de movimiento seleccionado */}
-              <View style={[
-                styles.movementTypeIndicator,
-                { 
-                  backgroundColor: movementType === 'IN' ? '#E8F5E9' : '#FFEBEE',
-                  marginBottom: isSmallHeight ? 12 : 16,
+              value={quantity}
+              onChangeText={(text) => {
+                // Solo permitir números
+                const numericValue = text.replace(/[^0-9]/g, '');
+                setQuantity(numericValue);
+                // Limpiar error si estaba relacionado con cantidad
+                if (saveError && (saveError.includes(t('scanner.errorQuantity')) || saveError.includes(t('scanner.errorQuantityTooLarge')))) {
+                  setSaveError(null);
                 }
-              ]}>
-                <Text style={[
-                  styles.movementTypeText,
-                  { 
-                    color: movementType === 'IN' ? '#2E7D32' : '#C62828',
-                    fontSize: isSmallHeight ? 18 : 20,
-                  }
-                ]}>
-                  {movementType === 'IN' ? t('scanner.entry') : t('scanner.exit')}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setMovementType(null);
-                    setQuantity('1');
-                    setSaveError(null);
-                  }}
-                  style={styles.cancelMovementButton}
-                >
-                  <Text style={{ color: theme.colors.textSecondary, fontSize: 16 }}>✕</Text>
-                </TouchableOpacity>
-              </View>
+              }}
+              keyboardType="numeric"
+              placeholder="1"
+              placeholderTextColor={theme.colors.textSecondary}
+              maxLength={6}
+              selectTextOnFocus={true}
+            />
+          </View>
 
-              {/* Campo de cantidad */}
-              <View style={[
-                styles.quantitySection,
-                { width: '100%', marginBottom: isSmallHeight ? 12 : 16 }
-              ]}>
-                <Text style={[dynamicStyles.label, { color: theme.colors.text }]}>
-                  {t('scanner.quantity')}:
-                </Text>
-                <TextInput
-                  style={[
-                    styles.quantityInput,
-                    {
-                      backgroundColor: theme.colors.surface,
-                      color: theme.colors.text,
-                      borderColor: saveError && saveError.includes(t('scanner.errorQuantity')) 
-                        ? '#F44336' 
-                        : theme.colors.border,
-                      height: isSmallHeight ? 56 : 64,
-                      fontSize: isSmallHeight ? 18 : 20,
-                      minHeight: isSmallHeight ? 56 : 64,
-                    },
-                  ]}
-                  value={quantity}
-                  onChangeText={(text) => {
-                    // Solo permitir números
-                    const numericValue = text.replace(/[^0-9]/g, '');
-                    setQuantity(numericValue);
-                    // Limpiar error si estaba relacionado con cantidad
-                    if (saveError && (saveError.includes(t('scanner.errorQuantity')) || saveError.includes(t('scanner.errorQuantityTooLarge')))) {
-                      setSaveError(null);
-                    }
-                  }}
-                  keyboardType="numeric"
-                  placeholder="1"
-                  placeholderTextColor={theme.colors.textSecondary}
-                  maxLength={6}
-                  selectTextOnFocus={true}
-                />
-              </View>
+          {/* Botón Confirmar */}
+          <Button
+            title={saving ? t('scanner.saving') : t('scanner.confirm')}
+            onPress={handleConfirmMovement}
+            variant="primary"
+            disabled={saving || !quantity || parseInt(quantity, 10) <= 0}
+            loading={saving}
+            style={[
+              styles.confirmMovementButton,
+              {
+                minHeight: isSmallHeight ? 64 : 72,
+                width: '100%',
+                marginBottom: isSmallHeight ? 12 : 20,
+              }
+            ]}
+            textStyle={{ 
+              fontSize: isSmallHeight ? 20 : 24, 
+              fontWeight: '700' 
+            }}
+          />
+        </View>
+      )}
 
-              {/* Botón Confirmar */}
-              <Button
-                title={saving ? t('scanner.saving') : t('scanner.confirm')}
-                onPress={handleConfirmMovement}
-                variant="primary"
-                disabled={saving || !quantity || parseInt(quantity, 10) <= 0}
-                loading={saving}
-                style={[
-                  styles.confirmMovementButton,
-                  {
-                    minHeight: isSmallHeight ? 64 : 72,
-                    width: '100%',
-                    marginBottom: isSmallHeight ? 12 : 20,
-                  }
-                ]}
-                textStyle={{ 
-                  fontSize: isSmallHeight ? 20 : 24, 
-                  fontWeight: '700' 
-                }}
-              />
-            </View>
-          )}
+      {/* Estados de error */}
+      {saveError && (
+        <View style={[styles.errorCard, { backgroundColor: '#FFEBEE', width: '100%', maxWidth: 600 }]}>
+          <Text style={[styles.errorText, { color: '#C62828', fontSize: isSmallHeight ? 14 : 16 }]}>
+            {saveError}
+          </Text>
+        </View>
+      )}
 
-          {/* Estados de error */}
-          {saveError && (
-            <View style={[styles.errorCard, { backgroundColor: '#FFEBEE', width: '100%', maxWidth: 600 }]}>
-              <Text style={[styles.errorText, { color: '#C62828', fontSize: isSmallHeight ? 14 : 16 }]}>
-                {saveError}
-              </Text>
-            </View>
-          )}
+      {saving && (
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+            {t('scanner.saving')}...
+          </Text>
+        </View>
+      )}
+    </>
+  );
 
-          {saving && (
-            <View style={styles.loadingContainer}>
-              <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-                {t('scanner.saving')}...
-              </Text>
-            </View>
-          )}
-        </ScrollView>
+  // Renderizado principal
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <Header />
+      
+        {!selectedProduct && (
+          <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
+            <Text style={[dynamicStyles.title, { color: theme.colors.text }]}>
+              {t('scanner.title')}
+            </Text>
+            <Button
+              title="Home"
+              onPress={() => {
+                clearScanner();
+                setSelectedProduct(null);
+                setSearchQuery('');
+                setSearchResults([]);
+                setScanModeActive(false);
+                setMovementType(null);
+                setQuantity('1');
+                setActiveUser(null);
+                navigation.navigate('Home');
+              }}
+              variant="outline"
+              style={styles.homeButton}
+            />
+          </View>
+        )}
 
-        {/* Input invisible para HID (Newland) - siempre activo */}
+        {Platform.OS === 'ios' ? (
+          <KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: theme.colors.background }}
+            behavior="padding"
+            keyboardVerticalOffset={0}
+          >
+            <ScrollView
+              style={{ flex: 1, backgroundColor: theme.colors.background }}
+              contentContainerStyle={[
+                styles.scrollContent,
+                dynamicStyles.container,
+                {
+                  justifyContent: isSmallHeight ? 'flex-start' : 'center',
+                  minHeight: isSmallHeight ? screenHeight - 150 : undefined,
+                  backgroundColor: theme.colors.background,
+                  paddingBottom: 20,
+                  alignItems: selectedProduct ? 'center' : 'stretch',
+                },
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={!isSmallHeight}
+            >
+              {selectedProduct ? productActionContent : scrollViewContent}
+            </ScrollView>
+          </KeyboardAvoidingView>
+        ) : (
+          <ScrollView
+            style={{ flex: 1, backgroundColor: theme.colors.background }}
+            contentContainerStyle={[
+              styles.scrollContent,
+              dynamicStyles.container,
+              {
+                justifyContent: isSmallHeight ? 'flex-start' : 'center',
+                minHeight: isSmallHeight ? screenHeight - 150 : undefined,
+                backgroundColor: theme.colors.background,
+                paddingBottom: 20,
+                alignItems: selectedProduct ? 'center' : 'stretch',
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={!isSmallHeight}
+          >
+            {selectedProduct ? productActionContent : scrollViewContent}
+          </ScrollView>
+        )}
+
+        {/* Elementos comunes (modales e inputs invisibles) */}
         {isNewland && !shouldUseCamera && (
           <TextInput
             ref={hidInputRef}
@@ -630,13 +794,59 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
           />
         )}
 
-        {/* Modal de Éxito - Profesional y Moderno */}
+        {/* Modo Escaneo: Overlays y Modales */}
+        {scanModeActive && isNewland && !shouldUseCamera && Platform.OS === 'android' && (
+          <Modal
+            visible={scanModeActive}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={handleCloseScanMode}
+          >
+            <View style={styles.scanModeOverlay}>
+              <View style={[styles.scanModeContent, { backgroundColor: theme.colors.surface }]}>
+                <Text style={[styles.scanModeTitle, { color: theme.colors.text }]}>
+                  {t('scanner.scanModeActive')}
+                </Text>
+                <Text style={[styles.scanModeHint, { color: theme.colors.textSecondary }]}>
+                  {t('scanner.scanModeActiveHint')}
+                </Text>
+                <Button
+                  title={t('scanner.closeScanMode')}
+                  onPress={handleCloseScanMode}
+                  variant="outline"
+                  style={styles.closeScanButton}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {scanModeActive && shouldUseCamera && Platform.OS !== 'web' && (
+          <Modal
+            visible={scanModeActive}
+            transparent={false}
+            animationType="slide"
+            onRequestClose={handleCloseScanMode}
+          >
+            <View style={styles.cameraModalContainer}>
+              <CameraScanner
+                onScan={handleScan}
+                active={scanModeActive}
+                onClose={handleCloseScanMode}
+                fullscreen={true}
+                onError={(error) => {
+                  setSaveError(error);
+                }}
+              />
+            </View>
+          </Modal>
+        )}
+
         <SuccessModal
           visible={saveSuccess}
           title={t('scanner.movementRegistered')}
           message={successMessage}
           onAccept={() => {
-            // Solución B: Volver automáticamente a la pantalla de búsqueda
             clearScanner();
             setSelectedProduct(null);
             setSearchQuery('');
@@ -646,7 +856,6 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
             setSaveSuccess(false);
             setSaveError(null);
             setSuccessMessage(undefined);
-            // Enfocar el input de búsqueda para continuar escaneando
             if (searchInputRef.current) {
               setTimeout(() => {
                 searchInputRef.current?.focus();
@@ -659,267 +868,25 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
             }
           }}
         />
-      </KeyboardAvoidingView>
-    );
-  }
 
-  // Vista de búsqueda/escaneo
-  return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <Header />
-      
-      <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
-        <Text style={[dynamicStyles.title, { color: theme.colors.text }]}>
-          {t('scanner.title')}
-        </Text>
-        <Button
-          title="Home"
-          onPress={() => {
-            clearScanner();
-            setSelectedProduct(null);
-            setSearchQuery('');
-            setSearchResults([]);
-            setScanModeActive(false);
-            setMovementType(null);
-            setQuantity('1');
-            setActiveUser(null);
-            navigation.navigate('Home');
-          }}
-          variant="outline"
-          style={styles.homeButton}
-        />
+        {/* Estados de escaneo (para cuando no está en modo modal) */}
+        {scanningLoading && !scanModeActive && (
+          <View style={styles.loadingContainer}>
+            <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
+              {t('scanner.scanning')}...
+            </Text>
+          </View>
+        )}
+
+        {scanningError && !scanModeActive && (
+          <View style={[styles.errorCard, { backgroundColor: '#FFEBEE' }]}>
+            <Text style={[styles.errorText, { color: '#C62828' }]}>
+              {scanningError}
+            </Text>
+          </View>
+        )}
       </View>
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          dynamicStyles.container,
-          {
-            justifyContent: isSmallHeight ? 'flex-start' : 'center',
-            minHeight: isSmallHeight ? screenHeight - 150 : undefined,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={!isSmallHeight}
-      >
-        {/* Buscador avanzado */}
-        <View style={[styles.searchSection, { marginBottom: isSmallHeight ? 12 : 20 }]}>
-          <Text style={[dynamicStyles.label, { color: theme.colors.text, marginBottom: isSmallHeight ? 6 : 8 }]}>
-            {t('scanner.search')}:
-          </Text>
-          <TextInput
-            ref={searchInputRef}
-            style={[
-              styles.searchInput,
-              dynamicStyles.searchInput,
-              {
-                backgroundColor: theme.colors.surface,
-                color: theme.colors.text,
-                borderColor: theme.colors.border,
-                marginBottom: isSmallHeight ? 6 : 8,
-              },
-            ]}
-            placeholder={t('scanner.searchPlaceholder')}
-            placeholderTextColor={theme.colors.textSecondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          {/* Resultados de búsqueda con scroll infinito */}
-          {showSearchResults && searchResults.length > 0 && (
-            <View style={[
-              styles.searchResults, 
-              { 
-                backgroundColor: theme.colors.surface,
-                maxHeight: isSmallHeight ? 250 : isMobileHorizontal ? 300 : 400,
-              }
-            ]}>
-              <ScrollView nestedScrollEnabled={true}>
-                {searchResults.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[
-                      styles.searchResultItem,
-                      { 
-                        borderBottomColor: theme.colors.border,
-                        padding: isSmallHeight ? 12 : 16,
-                      },
-                    ]}
-                    onPress={() => handleProductSelect(item)}
-                  >
-                    <Text style={[
-                      styles.searchResultCode, 
-                      { 
-                        color: theme.colors.textSecondary,
-                        fontSize: isSmallHeight ? 13 : 14,
-                      }
-                    ]}>
-                      {item.code}
-                    </Text>
-                    <Text style={[
-                      styles.searchResultName, 
-                      { 
-                        color: theme.colors.text,
-                        fontSize: isSmallHeight ? 15 : 16,
-                      }
-                    ]} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {searching && (
-            <Text style={[styles.searchingText, { color: theme.colors.textSecondary }]}>
-              {t('scanner.searching')}...
-            </Text>
-          )}
-
-          {showSearchResults && searchResults.length === 0 && !searching && searchQuery.length >= 2 && (
-            <Text style={[styles.noResultsText, { color: theme.colors.textSecondary }]}>
-              {t('scanner.noResults')}
-            </Text>
-          )}
-        </View>
-
-        {/* Botón Escanear */}
-        <Button
-          title={t('scanner.scanButton')}
-          onPress={handleScanButtonPress}
-          variant="primary"
-          style={[
-            styles.scanButton, 
-            { 
-              minHeight: isSmallHeight ? 56 : isMobileHorizontal ? 64 : 72,
-              marginTop: isSmallHeight ? 12 : 20,
-              marginBottom: isSmallHeight ? 12 : 20,
-            }
-          ]}
-          textStyle={{ 
-            fontSize: isSmallHeight ? 18 : isMobileHorizontal ? 20 : 24, 
-            fontWeight: '700' 
-          }}
-        />
-      </ScrollView>
-
-      {/* Modo Escaneo: Overlay SOLO para Newland REAL (NO para web ni móvil) */}
-      {/* En web, el input HID ya está siempre activo, no necesita modal */}
-      {scanModeActive && isNewland && !shouldUseCamera && Platform.OS === 'android' && (
-        <Modal
-          visible={scanModeActive}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={handleCloseScanMode}
-        >
-          <View style={styles.scanModeOverlay}>
-            <View style={[styles.scanModeContent, { backgroundColor: theme.colors.surface }]}>
-              <Text style={[styles.scanModeTitle, { color: theme.colors.text }]}>
-                {t('scanner.scanModeActive')}
-              </Text>
-              <Text style={[styles.scanModeHint, { color: theme.colors.textSecondary }]}>
-                {t('scanner.scanModeActiveHint')}
-              </Text>
-              <Button
-                title={t('scanner.closeScanMode')}
-                onPress={handleCloseScanMode}
-                variant="outline"
-                style={styles.closeScanButton}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Modo Escaneo: Cámara fullscreen SOLO para móvil (NO para Newland ni web) */}
-      {scanModeActive && shouldUseCamera && Platform.OS !== 'web' && (
-        <Modal
-          visible={scanModeActive}
-          transparent={false}
-          animationType="slide"
-          onRequestClose={handleCloseScanMode}
-        >
-          <View style={styles.cameraModalContainer}>
-            <CameraScanner
-              onScan={handleScan}
-              active={scanModeActive}
-              onClose={handleCloseScanMode}
-              fullscreen={true}
-              onError={(error) => {
-                setSaveError(error);
-              }}
-            />
-          </View>
-        </Modal>
-      )}
-
-      {/* Modal de Éxito - Profesional y Moderno */}
-      <SuccessModal
-        visible={saveSuccess}
-        title={t('scanner.movementRegistered')}
-        message={successMessage}
-        onAccept={() => {
-          // Solución B: Volver automáticamente a la pantalla de búsqueda
-          clearScanner();
-          setSelectedProduct(null);
-          setSearchQuery('');
-          setSearchResults([]);
-          setMovementType(null);
-          setQuantity('1');
-          setSaveSuccess(false);
-          setSaveError(null);
-          setSuccessMessage(undefined);
-          // Enfocar el input de búsqueda para continuar escaneando
-          if (searchInputRef.current) {
-            setTimeout(() => {
-              searchInputRef.current?.focus();
-            }, 100);
-          }
-          if (hidInputRef.current) {
-            setTimeout(() => {
-              hidInputRef.current?.focus();
-            }, 100);
-          }
-        }}
-      />
-
-      {/* Input invisible para HID (Newland) - siempre escuchando */}
-      {isNewland && !shouldUseCamera && (
-        <TextInput
-          ref={hidInputRef}
-          style={styles.hiddenInput}
-          value=""
-          onChangeText={handleScan}
-          autoFocus={false}
-          showSoftInputOnFocus={false}
-          keyboardType="default"
-          returnKeyType="done"
-        />
-      )}
-
-      {/* Estado de escaneo */}
-      {scanningLoading && !scanModeActive && (
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme.colors.textSecondary }]}>
-            {t('scanner.scanning')}...
-          </Text>
-        </View>
-      )}
-
-      {scanningError && !scanModeActive && (
-        <View style={[styles.errorCard, { backgroundColor: '#FFEBEE' }]}>
-          <Text style={[styles.errorText, { color: '#C62828' }]}>
-            {scanningError}
-          </Text>
-        </View>
-      )}
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
