@@ -15,6 +15,7 @@ export interface Movement {
   movementDate: string;
   requestReason: string;
   sourceApp: string;
+  warehouse: string | null;
   comments: string | null;
   createdAt: string;
 }
@@ -30,6 +31,7 @@ export interface CreateMovementDTO {
   quantityAfter: number;
   requestReason: string;
   sourceApp: string;
+  warehouse?: string;
   comments?: string;
 }
 

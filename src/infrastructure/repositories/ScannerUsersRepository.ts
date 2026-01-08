@@ -80,6 +80,7 @@ export class ScannerUsersRepository {
       id: data.id,
       displayName: data.display_name,
       enabled: data.enabled,
+      canDoEntry: data.can_do_entry, // Mapear nuevo campo
       notes: data.notes,
       lastSeenAt: data.last_seen_at,
       lastSeenDevice: data.last_seen_device,

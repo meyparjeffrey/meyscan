@@ -2,8 +2,15 @@
  * Componente principal de la aplicación - RESTAURANDO FUNCIONALIDAD
  */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+
+// Ignorar errores de refresh token de Supabase que son controlados
+LogBox.ignoreLogs([
+  'AuthApiError: Invalid Refresh Token: Refresh Token Not Found',
+  'AuthApiError: Invalid Refresh Token: Refresh Token not found',
+]);
+
 import { AppProvider } from './src/presentation/context/AppContext';
 import { AppNavigator } from './src/presentation/navigation/AppNavigator';
 import { ErrorBoundary } from './src/presentation/components/common/ErrorBoundary';

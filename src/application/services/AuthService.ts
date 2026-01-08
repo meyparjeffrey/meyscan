@@ -17,14 +17,23 @@ export class AuthService {
   async login(email: string, password: string): Promise<Session> {
     try {
       console.log('[AuthService] Intentando login con email:', email);
+      // DEBUG: Verificando longitud de password para detectar espacios accidentales
+      console.log('[AuthService] Longitud email:', email.length);
+      console.log('[AuthService] Longitud email (trim):', email.trim().length);
+      console.log('[AuthService] Longitud password:', password.length);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password: password,
+        password: password, // NO trim password por si la pass real tiene espacios
       });
 
       if (error) {
-        console.error('[AuthService] Error de Supabase:', error);
+        console.error('[AuthService] Error de Supabase DETALLADO:', {
+          status: error.status,
+          message: error.message,
+          name: error.name,
+          error_description: (error as any).error_description
+        });
         
         // Mapear errores de Supabase a mensajes más amigables
         if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
@@ -94,6 +103,13 @@ export class AuthService {
       
       if (error) {
         console.error('[AuthService] ❌ Error en getSession:', error);
+        
+        // Si hay un error de refresh token, limpiar la sesión
+        if (error.message.includes('refresh_token') || error.message.includes('Refresh Token')) {
+          console.log('[AuthService] Refresh token inválido detectado, limpiando sesión...');
+          await supabase.auth.signOut();
+        }
+        
         return null;
       }
       

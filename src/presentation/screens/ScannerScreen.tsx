@@ -549,22 +549,25 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
             },
           ]}
         >
-          <TouchableOpacity
-            style={[
-              dynamicStyles.actionButton,
-              styles.actionButton,
-              { 
-                backgroundColor: '#4CAF50', 
-                width: isMobileHorizontal ? '48%' : '100%',
-                paddingVertical: isSmallHeight ? 16 : 20,
-              },
-            ]}
-            onPress={() => handleMovementTypeSelect('IN')}
-          >
-            <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
-              {t('scanner.entry')}
-            </Text>
-          </TouchableOpacity>
+          {/* Botón ENTRADA: Solo visible si el usuario tiene permiso canDoEntry */}
+          {activeUser?.canDoEntry && (
+            <TouchableOpacity
+              style={[
+                dynamicStyles.actionButton,
+                styles.actionButton,
+                { 
+                  backgroundColor: '#4CAF50', 
+                  width: isMobileHorizontal ? '48%' : '100%',
+                  paddingVertical: isSmallHeight ? 16 : 20,
+                },
+              ]}
+              onPress={() => handleMovementTypeSelect('IN')}
+            >
+              <Text style={[dynamicStyles.actionButtonText, { color: '#FFFFFF' }]}>
+                {t('scanner.entry')}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[
@@ -572,7 +575,7 @@ export const ScannerScreen: React.FC<Props> = ({ navigation }) => {
               styles.actionButton,
               { 
                 backgroundColor: '#F44336', 
-                width: isMobileHorizontal ? '48%' : '100%',
+                width: isMobileHorizontal && activeUser?.canDoEntry ? '48%' : '100%', // Ajustar ancho si es el único botón
                 paddingVertical: isSmallHeight ? 16 : 20,
               },
             ]}

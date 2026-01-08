@@ -2,7 +2,7 @@
  * Modal de Administración (acceso oculto con 5 taps)
  */
 import React from 'react';
-import { Modal, View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet } from 'react-native';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../common/Button';
@@ -14,14 +14,13 @@ interface AdminModalProps {
   visible: boolean;
   onClose: () => void;
   onLogout: () => void;
-  onClearUser: () => void;
+  onClearUser?: () => void; // Opcional para mantener compatibilidad
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
   visible,
   onClose,
   onLogout,
-  onClearUser,
 }) => {
   const { theme } = useAppContext();
   const { session, isAuthenticated } = useAuth();
@@ -40,58 +39,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             {t('admin.title')}
           </Text>
 
-          <ScrollView style={styles.scrollView}>
-            {/* Diagnóstico */}
-            <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                {t('admin.diagnostics')}
+          {/* Diagnóstico - Fuera del ScrollView para que siempre sea visible */}
+          <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              {t('admin.diagnostics')}
+            </Text>
+            
+            <View style={styles.diagnosticRow}>
+              <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
+                {t('admin.version')}:
               </Text>
-              
-              <View style={styles.diagnosticRow}>
-                <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
-                  {t('admin.version')}:
-                </Text>
-                <Text style={[styles.diagnosticValue, { color: theme.colors.text }]}>
-                  {Constants.expoConfig?.version || '1.0.0'}
-                </Text>
-              </View>
-
-              <View style={styles.diagnosticRow}>
-                <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
-                  {t('admin.sessionStatus')}:
-                </Text>
-                <Text style={[styles.diagnosticValue, { color: isAuthenticated ? theme.colors.success : theme.colors.error }]}>
-                  {isAuthenticated ? 'OK' : 'Expirada'}
-                </Text>
-              </View>
-
-              <View style={styles.diagnosticRow}>
-                <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
-                  Source App:
-                </Text>
-                <Text style={[styles.diagnosticValue, { color: theme.colors.text }]}>
-                  {SOURCE_APP}
-                </Text>
-              </View>
+              <Text style={[styles.diagnosticValue, { color: theme.colors.text }]}>
+                {Constants.expoConfig?.version || '1.0.0'}
+              </Text>
             </View>
 
-            {/* Opciones */}
-            <View style={styles.actionsContainer}>
-              <Button
-                title={t('admin.logout')}
-                onPress={onLogout}
-                variant="primary"
-                style={styles.actionButton}
-              />
-
-              <Button
-                title={t('admin.clearUser')}
-                onPress={onClearUser}
-                variant="secondary"
-                style={styles.actionButton}
-              />
+            <View style={styles.diagnosticRow}>
+              <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
+                {t('admin.sessionStatus')}:
+              </Text>
+              <Text style={[styles.diagnosticValue, { color: isAuthenticated ? theme.colors.success : theme.colors.error }]}>
+                {isAuthenticated ? 'OK' : 'Expirada'}
+              </Text>
             </View>
-          </ScrollView>
+
+            <View style={styles.diagnosticRow}>
+              <Text style={[styles.diagnosticLabel, { color: theme.colors.textSecondary }]}>
+                Source App:
+              </Text>
+              <Text style={[styles.diagnosticValue, { color: theme.colors.text }]}>
+                {SOURCE_APP}
+              </Text>
+            </View>
+          </View>
+
+          {/* Botón de Cerrar Sesión - Fuera del ScrollView para que siempre sea visible */}
+          <Button
+            title={t('admin.logout')}
+            onPress={onLogout}
+            variant="primary"
+            style={styles.logoutButton}
+          />
 
           <Button
             title={t('common.cancel')}
@@ -125,13 +113,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
   section: {
     padding: 16,
     borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
@@ -150,15 +135,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  actionsContainer: {
+  logoutButton: {
     marginTop: 16,
-  },
-  actionButton: {
     marginBottom: 12,
     minHeight: 56,
   },
   closeButton: {
-    marginTop: 16,
     minHeight: 56,
   },
 });

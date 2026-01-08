@@ -6,6 +6,7 @@ export interface ScannerUser {
   id: string;
   displayName: string;
   enabled: boolean;
+  canDoEntry: boolean; // Nuevo campo para permisos
   notes: string | null;
   lastSeenAt: string | null;
   lastSeenDevice: string | null;

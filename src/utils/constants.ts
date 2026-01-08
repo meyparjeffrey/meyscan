@@ -28,6 +28,11 @@ export const APP_NAME = 'MeyparScan';
 export const SOURCE_APP = 'APK_SCANNER';
 
 /**
+ * Almacén por defecto para movimientos realizados desde la APK
+ */
+export const WAREHOUSE_DEFAULT = 'MEYPAR';
+
+/**
  * Valores por defecto
  */
 export const DEFAULTS = {

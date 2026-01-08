@@ -3,6 +3,7 @@
  */
 import { supabase } from '../supabase/supabaseClient';
 import { Movement, CreateMovementDTO } from '../../domain/entities/Movement';
+import { WAREHOUSE_DEFAULT } from '../../utils/constants';
 
 export class MovementRepository {
   /**
@@ -27,6 +28,7 @@ export class MovementRepository {
           movement_date: new Date().toISOString(),
           request_reason: movementData.requestReason,
           source_app: movementData.sourceApp,
+          warehouse: movementData.warehouse || WAREHOUSE_DEFAULT,
           comments: movementData.comments || null,
         })
         .select()
@@ -58,6 +60,7 @@ export class MovementRepository {
       movementDate: data.movement_date,
       requestReason: data.request_reason,
       sourceApp: data.source_app,
+      warehouse: data.warehouse,
       comments: data.comments,
       createdAt: data.created_at,
     };
